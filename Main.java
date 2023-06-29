@@ -1,12 +1,25 @@
+
 import java.sql.SQLException;
 import java.util.Scanner;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 
 public class Main {
     public static void main(String[] args) {
-        String url = "jdbc:mysql://localhost:3306/student_database";
-        String username = "root";
-        String password = "binyaminarfi26+";
+        Properties properties = new Properties();
+        try {
+            FileInputStream fileInputStream = new FileInputStream("config.properties");
+            properties.load(fileInputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        String url = properties.getProperty("db.url");
+        String username = properties.getProperty("db.username");
+        String password = properties.getProperty("db.password");
+        
         DatabaseConnector databaseConnector = new DatabaseConnector(url, username, password);
         try (Scanner scanner = new Scanner(System.in)) {
             int choice = -1;
@@ -21,6 +34,7 @@ public class Main {
                 System.out.println("6. trier la liste des étudiants");
                 System.out.println("7. Rechercher un étudiant ");
                 System.out.println("8. Moyenne du nombre d'étudiant ");
+                System.out.println("9. Exporter les donnes ");
                 System.out.println("0. Quitter");
 
                 choice = scanner.nextInt();
@@ -41,7 +55,7 @@ public class Main {
                         break;
                     case 4:
                         StudentViewer studentViewer = new StudentViewer(databaseConnector);
-                        studentViewer.viewAllStudents();
+                        studentViewer.viewAllStudentsWithPagination();
                         break;
                     case 5:
                         StudentSearcher studentSearcher = new StudentSearcher(databaseConnector);
@@ -58,6 +72,11 @@ public class Main {
                     case 8:
                         Statistics statistics = new Statistics(databaseConnector);
                         statistics.calculateAndDisplayStatistics();
+                        break;
+                    case 9:
+                        StudentExporter studentExporter = new StudentExporter(databaseConnector);
+                        String filePath = "etudiants.csv"; // Remplacez par le chemin complet de votre fichier
+                        studentExporter.exportToCSV(filePath);
                         break;
                     case 0:
                         System.out.println("Au revoir !");

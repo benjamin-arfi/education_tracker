@@ -1,8 +1,9 @@
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
-
-import com.opencsv.CSVWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class StudentExporter {
     private DatabaseConnector databaseConnector;
@@ -11,23 +12,37 @@ public class StudentExporter {
         this.databaseConnector = databaseConnector;
     }
 
-    public void exportToCSV(String fileName) {
-        try (CSVWriter writer = new CSVWriter(new FileWriter(fileName))) {
-            List<Student> students = databaseConnector.getAllStudents();
+    public void exportToCSV(String filePath) {
+        try (Connection connection = databaseConnector.getConnection();
+             FileWriter writer = new FileWriter(filePath)) {
+            // Préparer la requête pour récupérer tous les étudiants
+            String sql = "SELECT * FROM students";
+            PreparedStatement statement = connection.prepareStatement(sql);
+
+            // Exécuter la requête et obtenir le résultat
+            ResultSet resultSet = statement.executeQuery();
 
             // Écrire l'en-tête du fichier CSV
-            String[] header = { "ID", "Prénom", "Nom", "Âge", "Notes" };
-            writer.writeNext(header);
+            writer.append("ID,First Name,Last Name,Age,Grades\n");
 
-            // Écrire les données des étudiants
-            for (Student student : students) {
-                String[] data = { String.valueOf(student.getId()), student.getFirstName(), student.getLastName(),
-                        String.valueOf(student.getAge()), student.getGrades() };
-                writer.writeNext(data);
+            // Parcourir les résultats et écrire chaque ligne dans le fichier CSV
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String firstName = resultSet.getString("first_name");
+                String lastName = resultSet.getString("last_name");
+                int age = resultSet.getInt("age");
+                String grades = resultSet.getString("grades");
+
+                writer.append(id + ",");
+                writer.append(firstName + ",");
+                writer.append(lastName + ",");
+                writer.append(age + ",");
+                writer.append(grades + "\n");
             }
 
-            System.out.println("Export des données vers le fichier CSV réussi : " + fileName);
-        } catch (IOException e) {
+            System.out.println("Les données des étudiants ont été exportées avec succès dans le fichier : " + filePath);
+
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
         }
     }

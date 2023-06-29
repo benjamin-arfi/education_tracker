@@ -1,7 +1,9 @@
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class StudentAdder {
     private DatabaseConnector databaseConnector;
@@ -34,16 +36,27 @@ public class StudentAdder {
             System.out.println("Erreur : Veuillez saisir un nombre valide.");
             }
             }
-            System.out.print("Notes de l'étudiant (séparées par des virgules) : ");
-            String grades = scanner.nextLine();
+            boolean validEntry = false;
+            String gradesString = "";
 
+            do {
+                System.out.print("Notes de l'étudiant (séparées par des virgules) : ");
+                String entry = scanner.nextLine();
+
+            // Vérifier si l'entrée contient uniquement des chiffres et des virgules
+            if (entry.matches("[0-9,]+")) {
+                validEntry = true;
+                gradesString = entry;
+                } else {
+                System.out.println("Erreur : Veuillez saisir uniquement des chiffres séparés par des virgules.");
+                }
+            } while (!validEntry);
             String query = "INSERT INTO students (first_name, last_name, age, grades) VALUES (?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, firstName);
             statement.setString(2, lastName);
             statement.setInt(3, age);
-            statement.setString(4, grades);
-
+            statement.setString(4, gradesString);
             int rowsInserted = statement.executeUpdate();
 
             if (rowsInserted > 0) {
